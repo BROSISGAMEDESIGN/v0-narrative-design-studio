@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Play, Pause, SkipForward, SkipBack } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,10 +16,25 @@ interface CinemaModeProps {
 
 export function CinemaMode({ isOpen, onClose }: CinemaModeProps) {
   const { scenes, characters } = useEngineStore()
+  const musicRef = useRef<HTMLAudioElement>(null)
   const [currentSceneId, setCurrentSceneId] = useState<string | null>(null)
   const [isPaused, setIsPaused] = useState(false)
   const [progress, setProgress] = useState(0)
   const [sceneHistory, setSceneHistory] = useState<string[]>([])
+
+  // Play scene music when scene changes
+  useEffect(() => {
+    const scene = scenes.find(s => s.id === currentSceneId)
+    if (!scene || !musicRef.current) return
+    
+    if (scene.music?.url) {
+      musicRef.current.src = scene.music.url
+      musicRef.current.play().catch(() => {}) // Ignore autoplay errors
+    } else {
+      musicRef.current.pause()
+      musicRef.current.src = ''
+    }
+  }, [currentSceneId, scenes])
 
   // Get scenes sorted by position for initial playback
   const orderedScenes = useMemo(() => 
@@ -176,6 +191,9 @@ export function CinemaMode({ isOpen, onClose }: CinemaModeProps) {
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 bg-black flex flex-col"
         >
+          {/* Hidden audio element for scene music */}
+          <audio ref={musicRef} loop />
+          
           {/* Close button */}
           <Button
             variant="ghost"

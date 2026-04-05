@@ -32,6 +32,11 @@ export interface Scene {
     url: string | null
     name: string | null
   }
+  // Scene music/audio
+  music: {
+    url: string | null
+    name: string | null
+  }
   // New dialogue tree structure (replaces single dialogue)
   dialogueTree: DialogueTree
   // Legacy field for backwards compatibility
@@ -145,6 +150,7 @@ export function createDefaultScene(position: { x: number; y: number }, chapterId
     id: `scene-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     title: 'New Scene',
     media: { type: null, url: null, name: null },
+    music: { url: null, name: null },
     dialogueTree: { ...DEFAULT_DIALOGUE_TREE },
     dialogue: '',
     characterId: null,

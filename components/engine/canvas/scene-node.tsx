@@ -4,7 +4,7 @@ import { memo, useRef, useState, useCallback } from 'react'
 import { Handle, Position, useReactFlow, type NodeProps } from '@xyflow/react'
 import { 
   Upload, Sparkles, Clock, X, Trash2, Check, Plus, 
-  Volume2, Link, GripVertical, User
+  Volume2, Link, GripVertical, User, Music, Play, Pause
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -83,8 +83,11 @@ function SceneNodeComponent({ data, id }: NodeProps<SceneNodeData>) {
   } = useEngineStore()
   const { setEdges, getEdges } = useReactFlow()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const musicInputRef = useRef<HTMLInputElement>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
   const [aiMood, setAiMood] = useState<string | null>(null)
   const [linkingOptionId, setLinkingOptionId] = useState<string | null>(null)
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false)
 
   // Ensure dialogueTree exists
   const dialogueTree = scene.dialogueTree || DEFAULT_DIALOGUE_TREE
@@ -111,6 +114,38 @@ function SceneNodeComponent({ data, id }: NodeProps<SceneNodeData>) {
     updateScene(scene.id, {
       media: { type: null, url: null, name: null }
     })
+  }
+
+  const handleMusicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const url = URL.createObjectURL(file)
+    updateScene(scene.id, {
+      music: { url, name: file.name }
+    })
+  }
+
+  const handleRemoveMusic = () => {
+    if (scene.music?.url) {
+      URL.revokeObjectURL(scene.music.url)
+    }
+    setIsMusicPlaying(false)
+    updateScene(scene.id, {
+      music: { url: null, name: null }
+    })
+  }
+
+  const toggleMusicPlayback = () => {
+    if (!audioRef.current || !scene.music?.url) return
+    
+    if (isMusicPlaying) {
+      audioRef.current.pause()
+      setIsMusicPlaying(false)
+    } else {
+      audioRef.current.play()
+      setIsMusicPlaying(true)
+    }
   }
 
   const handleApplySuggestion = (suggestion: string, target: 'question' | string) => {
@@ -278,6 +313,61 @@ function SceneNodeComponent({ data, id }: NodeProps<SceneNodeData>) {
             <span className="text-xs">Upload image or video</span>
           </button>
         )}
+      </div>
+
+      {/* Music Layer */}
+      <div className="px-3 py-2 border-b border-border bg-secondary/30">
+        <input
+          ref={musicInputRef}
+          type="file"
+          accept="audio/*"
+          onChange={handleMusicUpload}
+          className="hidden"
+        />
+        {scene.music?.url && (
+          <audio 
+            ref={audioRef} 
+            src={scene.music.url} 
+            onEnded={() => setIsMusicPlaying(false)}
+          />
+        )}
+        
+        <div className="flex items-center gap-2">
+          <Music className="h-4 w-4 text-muted-foreground" />
+          
+          {scene.music?.url ? (
+            <>
+              <span className="flex-1 text-xs truncate">{scene.music.name}</span>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6"
+                onClick={toggleMusicPlayback}
+              >
+                {isMusicPlaying ? (
+                  <Pause className="h-3 w-3" />
+                ) : (
+                  <Play className="h-3 w-3" />
+                )}
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6 text-destructive"
+                onClick={handleRemoveMusic}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </>
+          ) : (
+            <button
+              onClick={() => musicInputRef.current?.click()}
+              className="flex-1 text-xs text-muted-foreground hover:text-foreground text-left"
+            >
+              Add scene music...
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Dialogue Tree Section */}
