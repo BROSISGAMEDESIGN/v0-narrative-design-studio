@@ -140,15 +140,20 @@ function SceneNodeComponent({ data, id }: NodeProps<SceneNodeData>) {
     })
   }
 
-  const toggleMusicPlayback = () => {
+  const toggleMusicPlayback = async () => {
     if (!audioRef.current || !scene.music?.url) return
     
     if (isMusicPlaying) {
       audioRef.current.pause()
       setIsMusicPlaying(false)
     } else {
-      audioRef.current.play()
-      setIsMusicPlaying(true)
+      try {
+        await audioRef.current.play()
+        setIsMusicPlaying(true)
+      } catch {
+        // Autoplay may be blocked by browser
+        setIsMusicPlaying(false)
+      }
     }
   }
 
