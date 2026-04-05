@@ -132,8 +132,8 @@ export default function CastPage() {
           </Button>
         </div>
 
-        {/* Characters Grid */}
-        <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        {/* Characters Grid - Fixed 3 columns with 120px square avatars */}
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
           <AnimatePresence mode="popLayout">
             {characters.map((character) => (
               <motion.div
@@ -144,13 +144,19 @@ export default function CastPage() {
                 exit={{ opacity: 0, scale: 0.9 }}
               >
                 <Card className="overflow-hidden group">
-                  <CardContent className="p-3">
-                    {/* Compact layout: Avatar + Info side by side */}
-                    <div className="flex items-start gap-3">
+                  <CardContent className="p-4">
+                    {/* Horizontal layout: Square avatar + Info */}
+                    <div className="flex items-center gap-4">
                       {/* Avatar - Strict 120px max, 1:1 square */}
                       <div 
-                        className="shrink-0 w-16 h-16 rounded-lg relative overflow-hidden"
-                        style={{ backgroundColor: `${character.dialogueColor}20` }}
+                        className="shrink-0 rounded-lg relative overflow-hidden"
+                        style={{ 
+                          width: 80,
+                          height: 80,
+                          maxWidth: 120,
+                          maxHeight: 120,
+                          backgroundColor: `${character.dialogueColor}20` 
+                        }}
                       >
                         {character.avatar ? (
                           <img
@@ -161,7 +167,7 @@ export default function CastPage() {
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <span 
-                              className="text-2xl font-bold"
+                              className="text-3xl font-bold"
                               style={{ color: character.dialogueColor }}
                             >
                               {character.name.charAt(0).toUpperCase()}
@@ -173,40 +179,40 @@ export default function CastPage() {
                       {/* Info */}
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-sm truncate">{character.name}</h3>
+                          <h3 className="font-semibold truncate">{character.name}</h3>
                           <div 
                             className="shrink-0 h-3 w-3 rounded-full"
                             style={{ backgroundColor: character.dialogueColor }}
                           />
                         </div>
-                        <p className="text-xs text-muted-foreground line-clamp-1">
+                        <p className="text-sm text-muted-foreground">
                           {VOICE_PROFILES.find(v => v.value === character.voiceProfile)?.label}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                           {getSceneCount(character.id)} scenes
                         </p>
+                        
+                        {/* Actions inline */}
+                        <div className="flex items-center gap-2 pt-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => setEditingId(character.id)}
+                          >
+                            <Edit2 className="h-3 w-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs text-destructive"
+                            onClick={() => deleteCharacter(character.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-
-                    {/* Actions row */}
-                    <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-border">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => setEditingId(character.id)}
-                      >
-                        <Edit2 className="h-3 w-3 mr-1" />
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-xs text-destructive"
-                        onClick={() => deleteCharacter(character.id)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
