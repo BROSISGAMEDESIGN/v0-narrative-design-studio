@@ -203,36 +203,22 @@ function SceneNodeComponent({ data, id }: NodeProps<SceneNodeData>) {
         boxShadow: chapter ? `0 0 20px ${chapter.color}20` : undefined
       }}
     >
-      {/* Main Input Handle (Left side) */}
+      {/* Main Input Handle (Left side - center) */}
       <Handle
         type="target"
         position={Position.Left}
-        className="!bg-primary !border-background !w-3 !h-3"
+        className="!bg-primary !border-2 !border-background !w-4 !h-4"
         style={{ top: '50%' }}
       />
       
-      {/* Default Source Handle (Right side - for linear flow) */}
+      {/* Default Source Handle (Right side - top area for linear flow) */}
       <Handle
         type="source"
         position={Position.Right}
         id="default"
-        className="!bg-primary !border-background !w-3 !h-3"
-        style={{ top: 60 }}
+        className="!bg-primary !border-2 !border-background !w-4 !h-4"
+        style={{ top: 80 }}
       />
-      
-      {/* Dynamic handles for each answer option */}
-      {dialogueTree.answers.map((option, index) => (
-        <Handle
-          key={option.id}
-          type="source"
-          position={Position.Right}
-          id={option.id}
-          className="!bg-cyan-500 !border-background !w-3 !h-3"
-          style={{ 
-            top: `calc(65% + ${index * 52}px)`,
-          }}
-        />
-      ))}
 
       {/* Header */}
       <div 
@@ -524,8 +510,23 @@ function SceneNodeComponent({ data, id }: NodeProps<SceneNodeData>) {
               return (
                 <div 
                   key={option.id} 
-                  className="space-y-1.5 p-2 rounded-md bg-secondary/50 border border-border"
+                  className="space-y-1.5 p-2 rounded-md bg-secondary/50 border border-border relative"
                 >
+                  {/* Connection handle for this answer - positioned on right edge */}
+                  <Handle
+                    type="source"
+                    position={Position.Right}
+                    id={option.id}
+                    className={cn(
+                      "!w-4 !h-4 !border-2 !border-background",
+                      option.targetSceneId ? "!bg-cyan-500" : "!bg-muted-foreground"
+                    )}
+                    style={{ 
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      right: -20,
+                    }}
+                  />
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-cyan-400 bg-cyan-400/20 px-2 py-0.5 rounded">
                       A{index + 1}

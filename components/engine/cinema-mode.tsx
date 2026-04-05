@@ -25,14 +25,31 @@ export function CinemaMode({ isOpen, onClose }: CinemaModeProps) {
   // Play scene music when scene changes
   useEffect(() => {
     const scene = scenes.find(s => s.id === currentSceneId)
-    if (!scene || !musicRef.current) return
+    if (!musicRef.current) return
     
-    if (scene.music?.url) {
+    // Stop previous music first
+    musicRef.current.pause()
+    musicRef.current.currentTime = 0
+    
+    if (scene?.music?.url) {
       musicRef.current.src = scene.music.url
-      musicRef.current.play().catch(() => {}) // Ignore autoplay errors
+      musicRef.current.volume = 0.5
+      // Play after a short delay to ensure source is loaded
+      const playPromise = musicRef.current.play()
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay may be blocked - that's OK
+        })
+      }
     } else {
-      musicRef.current.pause()
       musicRef.current.src = ''
+    }
+    
+    // Cleanup when component unmounts or scene changes
+    return () => {
+      if (musicRef.current) {
+        musicRef.current.pause()
+      }
     }
   }, [currentSceneId, scenes])
 
@@ -66,7 +83,13 @@ export function CinemaMode({ isOpen, onClose }: CinemaModeProps) {
 
   // Auto-advance based on duration (only if no branching options)
   useEffect(() => {
-    if (!isOpen || isPaused || !currentScene || hasBranchingOptions) return
+    // If scene has branching options, always pause and wait for user choice
+    if (!isOpen || !currentScene) return
+    if (hasBranchingOptions) {
+      setIsPaused(true) // Force pause on branching scenes
+      return
+    }
+    if (isPaused) return
 
     const duration = currentScene.duration * 1000 // Convert to ms
     let elapsed = 0
@@ -132,6 +155,7 @@ export function CinemaMode({ isOpen, onClose }: CinemaModeProps) {
     setSceneHistory(prev => [...prev, currentScene.id])
     
     if (targetSceneId) {
+      // Go to the linked scene
       setCurrentSceneId(targetSceneId)
     } else {
       // No target - go to next scene in order
@@ -141,6 +165,7 @@ export function CinemaMode({ isOpen, onClose }: CinemaModeProps) {
       }
     }
     setProgress(0)
+    setIsPaused(false) // Resume playback after selection
   }, [currentScene, currentIndex, orderedScenes])
 
   // Keyboard controls
