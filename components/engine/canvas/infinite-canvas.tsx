@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ReactFlow,
   MiniMap,
@@ -34,7 +34,7 @@ const edgeStyle = {
 }
 
 export function InfiniteCanvas() {
-  const { scenes, addScene, updateScene, chapters } = useEngineStore()
+  const { scenes, addScene, updateScene, chapters, updateDialogueOption } = useEngineStore()
 
   // Convert scenes to React Flow nodes
   const initialNodes = useMemo(() => 
@@ -56,6 +56,7 @@ export function InfiniteCanvas() {
           edges.push({
             id: `${scene.id}-${option.id}`,
             source: scene.id,
+            sourceHandle: option.id,
             target: option.targetSceneId,
             animated: true,
             style: edgeStyle,
@@ -101,6 +102,7 @@ export function InfiniteCanvas() {
           newEdges.push({
             id: `${scene.id}-${option.id}`,
             source: scene.id,
+            sourceHandle: option.id,
             target: option.targetSceneId,
             animated: true,
             style: edgeStyle,
@@ -132,15 +134,39 @@ export function InfiniteCanvas() {
   // Handle connections - update dialogue tree when edges are created via drag
   const onConnect = useCallback(
     (connection: Connection) => {
-      // For now, just add the visual edge
-      // The link button in scene-node handles the actual dialogue tree update
+      if (!connection.source || !connection.target) return
+      
+      // If sourceHandle is provided, it's an answer option handle
+      if (connection.sourceHandle && connection.sourceHandle !== 'default') {
+        // Update the dialogue option with the target scene ID
+        updateDialogueOption(connection.source, connection.sourceHandle, {
+          targetSceneId: connection.target
+        })
+      }
+      
+      // Add visual edge (will be synced from store anyway)
       setEdges((eds) => addEdge({
         ...connection,
         animated: true,
         style: edgeStyle,
       }, eds))
     },
-    [setEdges]
+    [setEdges, updateDialogueOption]
+  )
+
+  // Handle edge deletion
+  const onEdgesDelete = useCallback(
+    (deletedEdges: Edge[]) => {
+      deletedEdges.forEach((edge) => {
+        if (edge.sourceHandle && edge.sourceHandle !== 'default') {
+          // Clear the target from the dialogue option
+          updateDialogueOption(edge.source, edge.sourceHandle, {
+            targetSceneId: null
+          })
+        }
+      })
+    },
+    [updateDialogueOption]
   )
 
   // Add new scene
@@ -172,6 +198,7 @@ export function InfiniteCanvas() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onEdgesDelete={onEdgesDelete}
         onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
         fitView

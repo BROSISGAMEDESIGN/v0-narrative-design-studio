@@ -37,10 +37,16 @@ export function CinemaMode({ isOpen, onClose }: CinemaModeProps) {
   }, [currentSceneId, scenes])
 
   // Get scenes sorted by position for initial playback
+  // Include all scenes, prioritizing ones with chapters
   const orderedScenes = useMemo(() => 
-    scenes
-      .filter(s => s.chapterId)
-      .sort((a, b) => a.position.x - b.position.x)
+    [...scenes]
+      .sort((a, b) => {
+        // First sort by chapter (scenes with chapters first)
+        if (a.chapterId && !b.chapterId) return -1
+        if (!a.chapterId && b.chapterId) return 1
+        // Then by position
+        return a.position.x - b.position.x
+      })
   , [scenes])
 
   const currentScene = scenes.find(s => s.id === currentSceneId)

@@ -76,13 +76,17 @@ export default function CastPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const url = URL.createObjectURL(file)
-    
-    if (isEdit && editingId) {
-      updateCharacter(editingId, { avatar: url })
-    } else {
-      setNewCharacter(prev => ({ ...prev, avatar: url }))
+    // Convert to base64 for localStorage persistence
+    const reader = new FileReader()
+    reader.onload = () => {
+      const base64Url = reader.result as string
+      if (isEdit && editingId) {
+        updateCharacter(editingId, { avatar: base64Url })
+      } else {
+        setNewCharacter(prev => ({ ...prev, avatar: base64Url }))
+      }
     }
+    reader.readAsDataURL(file)
   }
 
   const getSceneCount = (characterId: string) => {
@@ -129,7 +133,7 @@ export default function CastPage() {
         </div>
 
         {/* Characters Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           <AnimatePresence mode="popLayout">
             {characters.map((character) => (
               <motion.div
@@ -140,68 +144,69 @@ export default function CastPage() {
                 exit={{ opacity: 0, scale: 0.9 }}
               >
                 <Card className="overflow-hidden group">
-                  <CardContent className="p-0">
-                    {/* Avatar */}
-                    <div 
-                      className="aspect-square relative"
-                      style={{ backgroundColor: `${character.dialogueColor}20` }}
-                    >
-                      {character.avatar ? (
-                        <img
-                          src={character.avatar}
-                          alt={character.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span 
-                            className="text-6xl font-bold"
-                            style={{ color: character.dialogueColor }}
-                          >
-                            {character.name.charAt(0).toUpperCase()}
-                          </span>
+                  <CardContent className="p-3">
+                    {/* Compact layout: Avatar + Info side by side */}
+                    <div className="flex items-start gap-3">
+                      {/* Avatar - Strict 120px max, 1:1 square */}
+                      <div 
+                        className="shrink-0 w-16 h-16 rounded-lg relative overflow-hidden"
+                        style={{ backgroundColor: `${character.dialogueColor}20` }}
+                      >
+                        {character.avatar ? (
+                          <img
+                            src={character.avatar}
+                            alt={character.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span 
+                              className="text-2xl font-bold"
+                              style={{ color: character.dialogueColor }}
+                            >
+                              {character.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-sm truncate">{character.name}</h3>
+                          <div 
+                            className="shrink-0 h-3 w-3 rounded-full"
+                            style={{ backgroundColor: character.dialogueColor }}
+                          />
                         </div>
-                      )}
-                      
-                      {/* Overlay actions */}
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <Button
-                          size="icon"
-                          variant="secondary"
-                          onClick={() => setEditingId(character.id)}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          onClick={() => deleteCharacter(character.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <p className="text-xs text-muted-foreground line-clamp-1">
+                          {VOICE_PROFILES.find(v => v.value === character.voiceProfile)?.label}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {getSceneCount(character.id)} scenes
+                        </p>
                       </div>
                     </div>
 
-                    {/* Info */}
-                    <div className="p-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold">{character.name}</h3>
-                        <div 
-                          className="h-4 w-4 rounded-full border-2 border-background"
-                          style={{ backgroundColor: character.dialogueColor }}
-                        />
-                      </div>
-                      {character.bio && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {character.bio}
-                        </p>
-                      )}
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>
-                          {VOICE_PROFILES.find(v => v.value === character.voiceProfile)?.label}
-                        </span>
-                        <span>{getSceneCount(character.id)} scenes</span>
-                      </div>
+                    {/* Actions row */}
+                    <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-border">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => setEditingId(character.id)}
+                      >
+                        <Edit2 className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs text-destructive"
+                        onClick={() => deleteCharacter(character.id)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

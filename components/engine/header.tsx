@@ -35,11 +35,7 @@ export function Header({ onPlay }: HeaderProps) {
     setIsEditing(false)
   }
 
-  const orderedScenes = scenes
-    .filter(s => s.chapterId)
-    .sort((a, b) => a.position.x - b.position.x)
-
-  const canPlay = orderedScenes.length > 0
+  const canPlay = scenes.length > 0
 
   return (
     <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 shrink-0">

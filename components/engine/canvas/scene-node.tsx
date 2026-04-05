@@ -99,18 +99,20 @@ function SceneNodeComponent({ data, id }: NodeProps<SceneNodeData>) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const url = URL.createObjectURL(file)
     const type = file.type.startsWith('video/') ? 'video' : 'image'
     
-    updateScene(scene.id, {
-      media: { type, url, name: file.name }
-    })
+    // Convert to base64 for localStorage persistence
+    const reader = new FileReader()
+    reader.onload = () => {
+      const base64Url = reader.result as string
+      updateScene(scene.id, {
+        media: { type, url: base64Url, name: file.name }
+      })
+    }
+    reader.readAsDataURL(file)
   }
 
   const handleRemoveMedia = () => {
-    if (scene.media.url) {
-      URL.revokeObjectURL(scene.media.url)
-    }
     updateScene(scene.id, {
       media: { type: null, url: null, name: null }
     })
@@ -120,16 +122,18 @@ function SceneNodeComponent({ data, id }: NodeProps<SceneNodeData>) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const url = URL.createObjectURL(file)
-    updateScene(scene.id, {
-      music: { url, name: file.name }
-    })
+    // Convert to base64 for localStorage persistence
+    const reader = new FileReader()
+    reader.onload = () => {
+      const base64Url = reader.result as string
+      updateScene(scene.id, {
+        music: { url: base64Url, name: file.name }
+      })
+    }
+    reader.readAsDataURL(file)
   }
 
   const handleRemoveMusic = () => {
-    if (scene.music?.url) {
-      URL.revokeObjectURL(scene.music.url)
-    }
     setIsMusicPlaying(false)
     updateScene(scene.id, {
       music: { url: null, name: null }
@@ -194,17 +198,36 @@ function SceneNodeComponent({ data, id }: NodeProps<SceneNodeData>) {
         boxShadow: chapter ? `0 0 20px ${chapter.color}20` : undefined
       }}
     >
-      {/* Handles */}
+      {/* Main Input Handle (Left side) */}
       <Handle
         type="target"
         position={Position.Left}
         className="!bg-primary !border-background !w-3 !h-3"
+        style={{ top: '50%' }}
       />
+      
+      {/* Default Source Handle (Right side - for linear flow) */}
       <Handle
         type="source"
         position={Position.Right}
+        id="default"
         className="!bg-primary !border-background !w-3 !h-3"
+        style={{ top: 60 }}
       />
+      
+      {/* Dynamic handles for each answer option */}
+      {dialogueTree.answers.map((option, index) => (
+        <Handle
+          key={option.id}
+          type="source"
+          position={Position.Right}
+          id={option.id}
+          className="!bg-cyan-500 !border-background !w-3 !h-3"
+          style={{ 
+            top: `calc(65% + ${index * 52}px)`,
+          }}
+        />
+      ))}
 
       {/* Header */}
       <div 
