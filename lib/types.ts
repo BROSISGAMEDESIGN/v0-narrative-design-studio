@@ -10,13 +10,31 @@ export interface Character {
   createdAt: number
 }
 
+// Dialogue tree structure
+export interface DialogueOption {
+  id: string
+  characterId: string | null
+  text: string
+  targetSceneId: string | null // Links to another scene node
+}
+
+export interface DialogueTree {
+  questionCharacterId: string | null
+  questionText: string
+  answers: DialogueOption[]
+}
+
 export interface Scene {
   id: string
+  title: string
   media: {
     type: 'image' | 'video' | null
     url: string | null
     name: string | null
   }
+  // New dialogue tree structure (replaces single dialogue)
+  dialogueTree: DialogueTree
+  // Legacy field for backwards compatibility
   dialogue: string
   characterId: string | null
   duration: number // seconds
@@ -59,6 +77,7 @@ export interface CinemaModeState {
   isPlaying: boolean
   currentSceneIndex: number
   isPaused: boolean
+  selectedAnswerId: string | null
 }
 
 // Default values
@@ -73,6 +92,12 @@ export const DEFAULT_CHAPTERS: Chapter[] = [
     createdAt: Date.now()
   }
 ]
+
+export const DEFAULT_DIALOGUE_TREE: DialogueTree = {
+  questionCharacterId: null,
+  questionText: '',
+  answers: []
+}
 
 export const DEFAULT_ENGINE_STATE: EngineState = {
   projectName: 'Untitled Project',
@@ -103,3 +128,30 @@ export const CHARACTER_COLORS = [
   '#06B6D4', // Cyan
   '#8B5CF6', // Violet
 ]
+
+// Helper to create a new dialogue option
+export function createDialogueOption(): DialogueOption {
+  return {
+    id: `option-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    characterId: null,
+    text: '',
+    targetSceneId: null
+  }
+}
+
+// Helper to create a new scene with default dialogue tree
+export function createDefaultScene(position: { x: number; y: number }, chapterId?: string): Scene {
+  return {
+    id: `scene-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    title: 'New Scene',
+    media: { type: null, url: null, name: null },
+    dialogueTree: { ...DEFAULT_DIALOGUE_TREE },
+    dialogue: '',
+    characterId: null,
+    duration: 5,
+    chapterId: chapterId || null,
+    position,
+    createdAt: Date.now(),
+    isCompleted: false
+  }
+}

@@ -16,14 +16,21 @@ import {
   Panel,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { Plus, Maximize2 } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SceneNode } from './scene-node'
 import { useEngineStore } from '@/lib/store'
-import type { Scene } from '@/lib/types'
+import { createDefaultScene, DEFAULT_DIALOGUE_TREE } from '@/lib/types'
 
 const nodeTypes = {
   scene: SceneNode,
+}
+
+// Custom edge style with neon glow
+const edgeStyle = {
+  stroke: 'var(--engine-neon)',
+  strokeWidth: 2,
+  filter: 'drop-shadow(0 0 4px var(--engine-neon))',
 }
 
 export function InfiniteCanvas() {
@@ -39,8 +46,38 @@ export function InfiniteCanvas() {
     }))
   , [scenes])
 
+  // Build edges from dialogue tree connections
+  const initialEdges = useMemo(() => {
+    const edges: Edge[] = []
+    scenes.forEach((scene) => {
+      const dialogueTree = scene.dialogueTree || DEFAULT_DIALOGUE_TREE
+      dialogueTree.answers.forEach((option, index) => {
+        if (option.targetSceneId) {
+          edges.push({
+            id: `${scene.id}-${option.id}`,
+            source: scene.id,
+            target: option.targetSceneId,
+            animated: true,
+            style: edgeStyle,
+            label: `A${index + 1}`,
+            labelStyle: { 
+              fill: 'var(--engine-cyan)', 
+              fontSize: 10, 
+              fontWeight: 'bold' 
+            },
+            labelBgStyle: { 
+              fill: 'var(--engine-panel)', 
+              fillOpacity: 0.8 
+            },
+          })
+        }
+      })
+    })
+    return edges
+  }, [scenes])
+
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState([])
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
 
   // Sync nodes with store when scenes change
   useEffect(() => {
@@ -54,6 +91,36 @@ export function InfiniteCanvas() {
     )
   }, [scenes, setNodes])
 
+  // Sync edges when scenes change (for dialogue tree connections)
+  useEffect(() => {
+    const newEdges: Edge[] = []
+    scenes.forEach((scene) => {
+      const dialogueTree = scene.dialogueTree || DEFAULT_DIALOGUE_TREE
+      dialogueTree.answers.forEach((option, index) => {
+        if (option.targetSceneId) {
+          newEdges.push({
+            id: `${scene.id}-${option.id}`,
+            source: scene.id,
+            target: option.targetSceneId,
+            animated: true,
+            style: edgeStyle,
+            label: `A${index + 1}`,
+            labelStyle: { 
+              fill: 'var(--engine-cyan)', 
+              fontSize: 10, 
+              fontWeight: 'bold' 
+            },
+            labelBgStyle: { 
+              fill: 'var(--engine-panel)', 
+              fillOpacity: 0.8 
+            },
+          })
+        }
+      })
+    })
+    setEdges(newEdges)
+  }, [scenes, setEdges])
+
   // Handle node position changes
   const onNodeDragStop = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -62,13 +129,15 @@ export function InfiniteCanvas() {
     [updateScene]
   )
 
-  // Handle connections
+  // Handle connections - update dialogue tree when edges are created via drag
   const onConnect = useCallback(
     (connection: Connection) => {
+      // For now, just add the visual edge
+      // The link button in scene-node handles the actual dialogue tree update
       setEdges((eds) => addEdge({
         ...connection,
         animated: true,
-        style: { stroke: 'var(--engine-neon)', strokeWidth: 2 },
+        style: edgeStyle,
       }, eds))
     },
     [setEdges]
@@ -83,30 +152,17 @@ export function InfiniteCanvas() {
     
     if (existingPositions.length > 0) {
       const maxX = Math.max(...existingPositions.map(p => p.x))
-      newX = maxX + 400
+      newX = maxX + 450
       newY = existingPositions[existingPositions.length - 1]?.y || 100
     }
 
-    const newScene: Scene = {
-      id: `scene-${Date.now()}`,
-      media: { type: null, url: null, name: null },
-      dialogue: '',
-      characterId: null,
-      duration: 5,
-      chapterId: chapters[0]?.id || null,
-      position: { x: newX, y: newY },
-      createdAt: Date.now(),
-      isCompleted: false,
-    }
+    const newScene = createDefaultScene(
+      { x: newX, y: newY },
+      chapters[0]?.id
+    )
     
     addScene(newScene)
   }, [scenes, chapters, addScene])
-
-  // Fit view to all nodes
-  const handleFitView = useCallback(() => {
-    // The fit view functionality is handled by the Controls component
-    // This is a placeholder for a custom fit view if needed
-  }, [])
 
   return (
     <div className="w-full h-full">
@@ -125,7 +181,7 @@ export function InfiniteCanvas() {
         maxZoom={2}
         defaultEdgeOptions={{
           animated: true,
-          style: { stroke: 'var(--engine-neon)', strokeWidth: 2 },
+          style: edgeStyle,
         }}
         proOptions={{ hideAttribution: true }}
       >
@@ -140,6 +196,14 @@ export function InfiniteCanvas() {
           nodeStrokeWidth={3}
           zoomable
           pannable
+          style={{
+            backgroundColor: 'var(--engine-panel)',
+          }}
+          nodeColor={(node) => {
+            const scene = scenes.find(s => s.id === node.id)
+            const chapter = chapters.find(c => c.id === scene?.chapterId)
+            return chapter?.color || 'var(--engine-neon)'
+          }}
         />
         
         {/* Custom panel for add button */}

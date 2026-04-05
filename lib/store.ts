@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { EngineState, Scene, Chapter, Character, TeamNote } from './types'
-import { DEFAULT_ENGINE_STATE } from './types'
+import type { EngineState, Scene, Chapter, Character, TeamNote, DialogueOption, DialogueTree } from './types'
+import { DEFAULT_ENGINE_STATE, DEFAULT_DIALOGUE_TREE } from './types'
 
 interface EngineStore extends EngineState {
   // Project
@@ -11,6 +11,12 @@ interface EngineStore extends EngineState {
   addScene: (scene: Scene) => void
   updateScene: (id: string, updates: Partial<Scene>) => void
   deleteScene: (id: string) => void
+  
+  // Dialogue Tree
+  updateDialogueTree: (sceneId: string, updates: Partial<DialogueTree>) => void
+  addDialogueOption: (sceneId: string, option: DialogueOption) => void
+  updateDialogueOption: (sceneId: string, optionId: string, updates: Partial<DialogueOption>) => void
+  deleteDialogueOption: (sceneId: string, optionId: string) => void
   
   // Chapters
   addChapter: (chapter: Chapter) => void
@@ -51,6 +57,56 @@ export const useEngineStore = create<EngineStore>()(
       })),
       deleteScene: (id) => set((state) => ({
         scenes: state.scenes.filter((s) => s.id !== id)
+      })),
+      
+      // Dialogue Tree
+      updateDialogueTree: (sceneId, updates) => set((state) => ({
+        scenes: state.scenes.map((s) =>
+          s.id === sceneId 
+            ? { ...s, dialogueTree: { ...(s.dialogueTree || DEFAULT_DIALOGUE_TREE), ...updates } } 
+            : s
+        )
+      })),
+      addDialogueOption: (sceneId, option) => set((state) => ({
+        scenes: state.scenes.map((s) =>
+          s.id === sceneId 
+            ? { 
+                ...s, 
+                dialogueTree: { 
+                  ...(s.dialogueTree || DEFAULT_DIALOGUE_TREE), 
+                  answers: [...(s.dialogueTree?.answers || []), option] 
+                } 
+              } 
+            : s
+        )
+      })),
+      updateDialogueOption: (sceneId, optionId, updates) => set((state) => ({
+        scenes: state.scenes.map((s) =>
+          s.id === sceneId 
+            ? { 
+                ...s, 
+                dialogueTree: { 
+                  ...(s.dialogueTree || DEFAULT_DIALOGUE_TREE), 
+                  answers: (s.dialogueTree?.answers || []).map((opt) =>
+                    opt.id === optionId ? { ...opt, ...updates } : opt
+                  )
+                } 
+              } 
+            : s
+        )
+      })),
+      deleteDialogueOption: (sceneId, optionId) => set((state) => ({
+        scenes: state.scenes.map((s) =>
+          s.id === sceneId 
+            ? { 
+                ...s, 
+                dialogueTree: { 
+                  ...(s.dialogueTree || DEFAULT_DIALOGUE_TREE), 
+                  answers: (s.dialogueTree?.answers || []).filter((opt) => opt.id !== optionId)
+                } 
+              } 
+            : s
+        )
       })),
       
       // Chapters
