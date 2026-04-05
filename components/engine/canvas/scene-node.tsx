@@ -111,14 +111,14 @@ function SceneNodeComponent({ data, id }: NodeProps<SceneNodeData>) {
       >
         <div className="flex items-center gap-2">
           <Select 
-            value={scene.chapterId || ''} 
-            onValueChange={(v) => updateScene(scene.id, { chapterId: v || null })}
+            value={scene.chapterId || 'none'} 
+            onValueChange={(v) => updateScene(scene.id, { chapterId: v === 'none' ? null : v })}
           >
             <SelectTrigger className="h-6 text-xs w-28 border-0 bg-transparent">
               <SelectValue placeholder="No chapter" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No chapter</SelectItem>
+              <SelectItem value="none">No chapter</SelectItem>
               {chapters.map((ch) => (
                 <SelectItem key={ch.id} value={ch.id}>
                   <div className="flex items-center gap-2">
@@ -212,8 +212,8 @@ function SceneNodeComponent({ data, id }: NodeProps<SceneNodeData>) {
         {/* Character selector with avatar */}
         <div className="flex items-center gap-2">
           <Select 
-            value={scene.characterId || ''} 
-            onValueChange={(v) => updateScene(scene.id, { characterId: v || null })}
+            value={scene.characterId || 'none'} 
+            onValueChange={(v) => updateScene(scene.id, { characterId: v === 'none' ? null : v })}
           >
             <SelectTrigger className="flex-1 h-8 text-xs">
               <SelectValue placeholder="Select character">
@@ -234,7 +234,7 @@ function SceneNodeComponent({ data, id }: NodeProps<SceneNodeData>) {
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No character</SelectItem>
+              <SelectItem value="none">No character</SelectItem>
               {characters.map((char) => (
                 <SelectItem key={char.id} value={char.id}>
                   <div className="flex items-center gap-2">
