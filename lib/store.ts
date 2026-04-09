@@ -1,9 +1,8 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import type { EngineState, Scene, Chapter, Character, TeamNote, DialogueOption, DialogueTree } from './types'
 import { DEFAULT_ENGINE_STATE, DEFAULT_DIALOGUE_TREE } from './types'
 
-interface EngineStore extends EngineState {
+export interface EngineStore extends EngineState {
   // Project
   setProjectName: (name: string) => void
   
@@ -38,9 +37,7 @@ interface EngineStore extends EngineState {
   reset: () => void
 }
 
-export const useEngineStore = create<EngineStore>()(
-  persist(
-    (set) => ({
+export const useEngineStore = create<EngineStore>()((set) => ({
       ...DEFAULT_ENGINE_STATE,
       
       // Project
@@ -157,9 +154,4 @@ export const useEngineStore = create<EngineStore>()(
       // Actions
       save: () => set({ lastSaved: Date.now() }),
       reset: () => set(DEFAULT_ENGINE_STATE)
-    }),
-    {
-      name: 'brosis-engine-storage',
-    }
-  )
-)
+}))

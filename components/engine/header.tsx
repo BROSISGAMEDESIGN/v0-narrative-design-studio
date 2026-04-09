@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Save, Play, Check } from 'lucide-react'
+import { Save, Play, Check, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useEngineStore } from '@/lib/store'
+import { downloadNarrativeExport } from '@/lib/narrative-export'
 
 interface HeaderProps {
   onPlay: () => void
@@ -36,6 +37,9 @@ export function Header({ onPlay }: HeaderProps) {
   }
 
   const canPlay = scenes.length > 0
+  const handleExport = () => {
+    downloadNarrativeExport(useEngineStore.getState())
+  }
 
   return (
     <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 shrink-0">
@@ -92,6 +96,16 @@ export function Header({ onPlay }: HeaderProps) {
               Save
             </>
           )}
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExport}
+          className="gap-2"
+        >
+          <Download className="h-4 w-4" />
+          Export JSON
         </Button>
         
         <Button
